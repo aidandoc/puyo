@@ -27,7 +27,6 @@ class.meta = {
     __newindex = function(t,k,v)
         if not k then return rawset(t,#t+1,v) end
         if type(k) == "string" then return rawset(t,k,v) end
-        --if k == nil then return rawset(t,k,v) end
         if k > #t then return rawset(t,#t+1,v) end
         return rawset(t,k,v)
     end,

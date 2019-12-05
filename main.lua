@@ -1,5 +1,3 @@
-
-
 local module = require("module")
 local class  = require("class")
 local width,height = math.floor(love.graphics.getWidth()/5),math.floor(love.graphics.getHeight()*0.8)
@@ -7,6 +5,16 @@ local grid = setmetatable({},module.meta)
 local bricks = setmetatable({},module.meta)
 local offset = 50
 local a,b = 20,20
+local bStart = {
+    x = width,
+    y = 10
+}
+local frameProp = {
+    fall = 120,
+    move = 20
+}
+local stuck = false -- testing purposes
+local down = false
 
 function generateGrid()
     for f = 1, math.floor(height/b) do
@@ -17,14 +25,12 @@ function generateGrid()
 end
 
 function newBlock()
-    local start = {10,100}
-    block = class.rect:new(start[1],start[2],a,b)
-
+    block = class.rect:new(bStart.x,bStart.y,a,b)
     return block
 end
 
 function love.load()
-    d = 0
+    frames = 0
 
     love.graphics.setBackgroundColor(255,128/255,128/255)
     test_rect = class.rect:new(10,10,200,300)
@@ -37,26 +43,74 @@ function love.load()
     generateGrid()
 end
 function love.update(t) 
-    d = d + t
+    frames = frames + 1 -- amount of frames
+
+    if frames % frameProp.fall == 0 then
+        if not down then
+            if not stuck then
+                bStart.y = bStart.y + b 
+            end
+        end
+    end
+
     
     function love.keypressed(k)
-        if k == "e" then
-            print(grid)
+        if k == "escape" then
+            love.event.quit()
         end
+    end
+
+
+    if love.keyboard.isDown("right") then
+        if frames % frameProp.move == 0 then
+            if not stuck then
+                bStart.x = bStart.x + a
+            end
+        end
+    end
+
+    if love.keyboard.isDown("left") then
+        if frames % frameProp.move == 0 then
+            if not stuck then
+                bStart.x = bStart.x - a
+            end
+        end
+    end
+
+    if love.keyboard.isDown("down") then
+        down = true
+        bStart.y = bStart.y + 1
+    end
+
+    function love.keyreleased(k)
+        if k == "down" then
+            down = false
+        end
+    end
+
+    if bStart.y + b >= height+offset then -- ground
+        bStart.y = height+offset - b
+        stuck = true
+    end
+
+    if bStart.x + b >= width*2 then -- left bound
+        bStart.x = width*2 - b
+    end
+
+    if bStart.x - b <= width - width/4 then -- right bound
+        bStart.x = (width - width/4) + b*2
     end
 
 end
 
 function love.draw()
-    for f = 1,math.floor(height)/b do
-        for i=0,math.floor(width/a)-1 do
-            sq = love.graphics.rectangle("line",i*a + width,f*b - (b - offset),a,b) -- make classes with values {x,y,true}
-            grid(sq)
-        end
-    end
+    love.graphics.setColor(1,1,1)
+
     love.graphics.rectangle("line",width,50,width,math.floor(height))
     r_bound:draw("fill")
     l_bound:draw("fill")
     ground:draw("fill")
-    newBlock():draw("fill")
+
+    love.graphics.setColor(128/255,128/255,255)
+    newBlock(0,0):draw("fill")
 end
