@@ -26,6 +26,7 @@ end
 
 function newBlock()
     block = class.rect:new(bStart.x,bStart.y,a,b)
+    block:prop("stuck",0)
     return block
 end
 
@@ -34,7 +35,7 @@ function love.load()
 
     love.graphics.setBackgroundColor(255,128/255,128/255)
     test_rect = class.rect:new(10,10,200,300)
-    test_rect:prop("occ",false)
+    test_rect:prop("occ",0)
 
     l_bound = class.rect:new(width - width/4, offset, width/4, height)
     r_bound = class.rect:new(width*2, offset, width/4, height)
@@ -58,21 +59,17 @@ function love.update(t)
         if k == "escape" then
             love.event.quit()
         end
-    end
-
-
-    if love.keyboard.isDown("right") then
-        if frames % frameProp.move == 0 then
-            if not stuck then
-                bStart.x = bStart.x + a
-            end
+        if k == "e" then
+            print(grid)
         end
-    end
-
-    if love.keyboard.isDown("left") then
-        if frames % frameProp.move == 0 then
+        if k == "left" then
             if not stuck then
                 bStart.x = bStart.x - a
+            end
+        end
+        if k == "right" then
+            if not stuck then
+                bStart.x = bStart.x + a
             end
         end
     end
@@ -111,6 +108,6 @@ function love.draw()
     l_bound:draw("fill")
     ground:draw("fill")
 
-    love.graphics.setColor(128/255,128/255,255)
+    love.graphics.setColor(128/255,128/255,1)
     newBlock(0,0):draw("fill")
 end
