@@ -14,7 +14,6 @@ position = {
     x = width,
     y = 10
 }
-radius = 1
 
 function newPuyo() -- put in class/module?
     rect = {}
@@ -28,23 +27,6 @@ function newPuyo() -- put in class/module?
 end
 
 function lookRadius()
-    radius = radius + 1
-
-    -- for i,v in ipairs(grid) do
-    --     for _,puyo in ipairs(puyos) do
-    --         if puyo.y + puyo.height == v[2] and puyo.x == v[1] then
-    --             if v[3] then
-    --                 puyo.stuck = true
-    --                 for _,bricks in pairs(grid) do
-    --                     if bricks[1] == puyo.x and bricks[2] == puyo.y then
-    --                         bricks[3] = true
-    --                     end
-    --                 end
-    --             end
-    --         end
-    --     end
-    -- end
-
     for i,v in pairs(grid) do
         for _, puyo in ipairs(puyos) do
             if puyo.y + puyo.height == v[2] and puyo.x == v[1] and v[3] then
@@ -107,11 +89,6 @@ function love.update(dt)
                 if not v.stuck then
                     v.x = v.x - sizeX
                 end
-            end
-        end
-        if key == "e" then
-            for i,v in pairs(grid) do
-                print(v[1],v[2],v[3])
             end
         end
         if key == "right" then
