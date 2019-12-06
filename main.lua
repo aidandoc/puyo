@@ -9,13 +9,14 @@ sizeX,sizeY = 20,20
 width,height = math.floor(love.graphics.getWidth()/5),math.floor(love.graphics.getHeight()*0.8)
 
 down = false
-frameFall = 120
+frameFall = 30
 position = {
     x = width,
     y = 10
 }
+radius = 1
 
-function newPuyo()
+function newPuyo() -- put in class/module?
     rect = {}
     rect.x = position.x
     rect.y = position.y
@@ -26,15 +27,43 @@ function newPuyo()
     table.insert(puyos, rect)
 end
 
+function lookRadius()
+    radius = radius + 1
+
+    -- for i,v in ipairs(grid) do
+    --     for _,puyo in ipairs(puyos) do
+    --         if puyo.y + puyo.height == v[2] and puyo.x == v[1] then
+    --             if v[3] then
+    --                 puyo.stuck = true
+    --                 for _,bricks in pairs(grid) do
+    --                     if bricks[1] == puyo.x and bricks[2] == puyo.y then
+    --                         bricks[3] = true
+    --                     end
+    --                 end
+    --             end
+    --         end
+    --     end
+    -- end
+
+    for i,v in pairs(grid) do
+        for _, puyo in ipairs(puyos) do
+            if puyo.y + puyo.height == v[2] and puyo.x == v[1] and v[3] then
+                puyo.stuck = true
+                for _, bricks in pairs(grid) do
+                    if bricks[1] == puyo.x and bricks[2] == puyo.y then
+                        bricks[3] = true
+                    end
+                end
+            end
+        end
+    end
+
+end
 
 function generateGrid() -- check if errors
     for columns = 1, math.floor(height/sizeY) do
         for rows = 0, math.floor(width/sizeX) - 1 do
-            props = {}
-            props.x = (columns * sizeX) + width
-            props.y = (rows * sizeY) - (sizeX - offset)
-            props.occ = false
-            grid(props)
+            grid({(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),false})
         end
     end
 end
@@ -62,6 +91,7 @@ function love.update(dt)
             if frames % frameFall == 0 then
                 if not down then
                     v.y = v.y + sizeY/2
+                    lookRadius()
                 end
             end
         end
@@ -77,6 +107,11 @@ function love.update(dt)
                 if not v.stuck then
                     v.x = v.x - sizeX
                 end
+            end
+        end
+        if key == "e" then
+            for i,v in pairs(grid) do
+                print(v[1],v[2],v[3])
             end
         end
         if key == "right" then
@@ -95,7 +130,8 @@ function love.update(dt)
         down = true
         for i,v in ipairs(puyos) do
             if not v.stuck then
-                v.y = v.y + 1
+                v.y = v.y + sizeY/2
+                lookRadius()
             end
         end
     end
@@ -111,6 +147,11 @@ function love.update(dt)
         if v.y + sizeY >= height + offset then -- ground
             v.y = height + offset - sizeY
             v.stuck = true
+            for _,b in pairs(grid) do
+                if b[1] == v.x and b[2] == v.y then
+                    b[3] = true
+                end
+            end
         end
     end
 
@@ -139,6 +180,6 @@ function love.draw()
     love.graphics.setColor(128/255,128/255,255)
 
     for i,v in ipairs(puyos) do
-        love.graphics.rectangle("fill",v.x,v.y,v.width,v.height)
+        love.graphics.rectangle("line",v.x,v.y,v.width,v.height)
     end
 end
