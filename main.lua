@@ -14,6 +14,23 @@ position = {
     x = width,
     y = 10
 }
+colors = {
+    {
+        r = 255,
+        b = 0,
+        g = 0
+    },
+    {
+        r = 0,
+        b = 255,
+        g = 0
+    },
+    {
+        r = 0,
+        b = 0,
+        g = 255
+    }
+}
 
 function newPuyo() -- put in class/module?
     rect = {}
@@ -22,8 +39,25 @@ function newPuyo() -- put in class/module?
     rect.width = sizeX
     rect.height = sizeY
     rect.stuck = false
+    rect.color = colors[math.random(#colors)]
 
     table.insert(puyos, rect)
+end
+
+function lookDir(dir)
+    for i,v in pairs(grid) do
+        for _,p in ipairs(puyos) do
+            if dir then -- right
+                if p.x + p.width == v[1] and (p.y == v[2] - (sizeY/2) or p.y == v[2]) and not p.stuck and v[3] then
+                    p.x = p.x - p.width
+                end
+            else -- left
+                if p.x - p.width == v[1] and (p.y == v[2] - (sizeY/2) or p.y == v[2]) and not p.stuck and v[3] then
+                    p.x = p.x + p.width
+                end
+            end
+        end
+    end
 end
 
 function lookRadius()
@@ -87,6 +121,7 @@ function love.update(dt)
         if key == "left" then -- check for blocks
             for i,v in ipairs(puyos) do
                 if not v.stuck then
+                    lookDir(false)
                     v.x = v.x - sizeX
                 end
             end
@@ -94,6 +129,7 @@ function love.update(dt)
         if key == "right" then
             for i,v in ipairs(puyos) do
                 if not v.stuck then
+                    lookDir(true)
                     v.x = v.x + sizeX
                 end
             end
@@ -107,8 +143,10 @@ function love.update(dt)
         down = true
         for i,v in ipairs(puyos) do
             if not v.stuck then
-                v.y = v.y + sizeY/2
-                lookRadius()
+                if frames % math.floor(frameFall/4) == 0 then
+                    v.y = v.y + sizeY/2
+                    lookRadius()
+                end
             end
         end
     end
@@ -148,15 +186,21 @@ end
 
 function love.draw()
 
+    -- for columns = 1, math.floor(height/sizeY) do
+    --     for rows = 0, math.floor(width/sizeX) - 1 do
+    --         love.graphics.rectangle("line",(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),sizeX,sizeY)
+    --     end
+    -- end
+
     love.graphics.setColor(1,1,1)
 
     r_bound:draw("line")
     l_bound:draw("line")
     ground:draw("line")
 
-    love.graphics.setColor(128/255,128/255,255)
 
     for i,v in ipairs(puyos) do
-        love.graphics.rectangle("line",v.x,v.y,v.width,v.height)
+        love.graphics.setColor(v.color.r,v.color.g,v.color.b)
+        love.graphics.rectangle("fill",v.x,v.y,v.width,v.height)
     end
 end
