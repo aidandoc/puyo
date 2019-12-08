@@ -10,10 +10,9 @@ width,height = math.floor(love.graphics.getWidth()/5),math.floor(love.graphics.g
 
 down = false
 frameFall = 30
-position = {
-    x = width,
-    y = 10
-}
+lastX,position = 50,50
+falling = false
+score = 0
 colors = {
     {
         r = 255,
@@ -29,13 +28,18 @@ colors = {
         r = 0,
         b = 0,
         g = 255
+    },
+    {
+        r = 255,
+        b = 0,
+        g = 255
     }
 }
 
 function newPuyo() -- put in class/module?
     rect = {}
-    rect.x = position.x
-    rect.y = position.y
+    rect.x = lastX
+    rect.y = position
     rect.width = sizeX
     rect.height = sizeY
     rect.stuck = false
@@ -44,15 +48,27 @@ function newPuyo() -- put in class/module?
     table.insert(puyos, rect)
 end
 
+function generateGrid() -- check if errors
+    for columns = 1, math.floor(height/sizeY) do
+        for rows = 0, math.floor(width/sizeX) - 1 do
+            local tab = {}
+            tab.x = (rows * sizeX) + width
+            tab.y = (columns * sizeY) - (sizeX - offset)
+            tab.occ = false
+            grid({x = tab.x,y = tab.y,occ = tab.occ})
+        end
+    end
+end
+
 function lookDir(dir)
-    for i,v in pairs(grid) do
+    for i,v in ipairs(grid) do
         for _,p in ipairs(puyos) do
             if dir then -- right
-                if p.x + p.width == v[1] and (p.y == v[2] - (sizeY/2) or p.y == v[2]) and not p.stuck and v[3] then
+                if p.x + p.width == v.x and (p.y == v.y - (sizeY/2) or p.y == v.y) and not p.stuck and v.occ then
                     p.x = p.x - p.width
                 end
             else -- left
-                if p.x - p.width == v[1] and (p.y == v[2] - (sizeY/2) or p.y == v[2]) and not p.stuck and v[3] then
+                if p.x - p.width == v.x and (p.y == v.y - (sizeY/2) or p.y == v.y) and not p.stuck and v.occ then
                     p.x = p.x + p.width
                 end
             end
@@ -61,13 +77,15 @@ function lookDir(dir)
 end
 
 function lookRadius()
-    for i,v in pairs(grid) do
+    for i,v in ipairs(grid) do
         for _, puyo in ipairs(puyos) do
-            if puyo.y + puyo.height == v[2] and puyo.x == v[1] and v[3] then
+            if puyo.y + puyo.height == v.y and puyo.x == v.x and v.occ and not puyo.stuck then
                 puyo.stuck = true
-                for _, bricks in pairs(grid) do
-                    if bricks[1] == puyo.x and bricks[2] == puyo.y then
-                        bricks[3] = true
+                falling = false
+                lastX = puyo.x
+                for _, bricks in ipairs(grid) do
+                    if bricks.x == puyo.x and bricks.y == puyo.y then
+                        bricks.occ = true
                     end
                 end
             end
@@ -76,20 +94,13 @@ function lookRadius()
 
 end
 
-function generateGrid() -- check if errors
-    for columns = 1, math.floor(height/sizeY) do
-        for rows = 0, math.floor(width/sizeX) - 1 do
-            grid({(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),false})
-        end
-    end
-end
 
 function love.load()
 
     love.graphics.setBackgroundColor(255,128/255,128/255)
-    l_bound = class.rect:new(width - width/4, offset, width/4, height)
-    r_bound = class.rect:new(width*2, offset, width/4, height)
-    ground = class.rect:new(width - width/4,height + offset,width + width/2,offset)
+    l_bound = class.rect:new(width - width/4, offset, 0, height)
+    r_bound = class.rect:new(width*2, offset, 0, height)
+    ground = class.rect:new(width - width/4,height + offset,0,offset)
 
 
     generateGrid()
@@ -113,33 +124,19 @@ function love.update(dt)
         end
     end
 
+    if not falling then
+        falling = true
+        newPuyo()
+    end
+
 
     function love.keypressed(key)
         if key == "escape" then
             love.event.quit()
         end
-        if key == "left" then -- check for blocks
-            for i,v in ipairs(puyos) do
-                if not v.stuck then
-                    lookDir(false)
-                    v.x = v.x - sizeX
-                end
-            end
-        end
-        if key == "right" then
-            for i,v in ipairs(puyos) do
-                if not v.stuck then
-                    lookDir(true)
-                    v.x = v.x + sizeX
-                end
-            end
-        end
-        if key == "space" then
-            newPuyo()
-        end
     end
 
-    if love.keyboard.isDown("down") then
+    if love.keyboard.isDown("down","s") then
         down = true
         for i,v in ipairs(puyos) do
             if not v.stuck then
@@ -151,20 +148,45 @@ function love.update(dt)
         end
     end
 
+    if love.keyboard.isDown("left","a") then
+        for i,v in ipairs(puyos) do
+            if not v.stuck then
+                if frames % (frameFall/2) == 0 then
+                    lookDir(false)
+                    v.x = v.x - (sizeX)
+                end
+            end
+        end
+    end
+
+    if love.keyboard.isDown("right","d") then
+        for i,v in ipairs(puyos) do
+            if not v.stuck then
+                if frames % (frameFall/2) == 0 then
+                    lookDir(false)
+                    v.x = v.x + sizeX
+                end
+                
+            end
+        end
+    end
+
     function love.keyreleased(key)
-        if key == "down" then
+        if key == "down" or key == "s" then
             down = false
         end
     end
 
     -- borders
     for i,v in ipairs(puyos) do
-        if v.y + sizeY >= height + offset then -- ground
+        if v.y + sizeY >= height + offset and not v.stuck then -- ground
             v.y = height + offset - sizeY
             v.stuck = true
-            for _,b in pairs(grid) do
-                if b[1] == v.x and b[2] == v.y then
-                    b[3] = true
+            falling = false
+            lastX = v.x
+            for _,b in ipairs(grid) do
+                if b.x == v.x and b.y == v.y then
+                    b.occ = true
                 end
             end
         end
@@ -186,21 +208,24 @@ end
 
 function love.draw()
 
-    -- for columns = 1, math.floor(height/sizeY) do
-    --     for rows = 0, math.floor(width/sizeX) - 1 do
-    --         love.graphics.rectangle("line",(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),sizeX,sizeY)
-    --     end
-    -- end
+    for columns = 1, math.floor(height/sizeY) do
+        for rows = 0, math.floor(width/sizeX) - 1 do
+            love.graphics.setColor(255, 97/255, 97/255)
+            love.graphics.rectangle("fill",(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),sizeX,sizeY)
+        end
+    end
 
-    love.graphics.setColor(1,1,1)
-
-    r_bound:draw("line")
-    l_bound:draw("line")
-    ground:draw("line")
+    love.graphics.setColor(255, 97/255, 97/255)
+    r_bound:draw("fill")
+    l_bound:draw("fill")
+    ground:draw("fill")
 
 
     for i,v in ipairs(puyos) do
         love.graphics.setColor(v.color.r,v.color.g,v.color.b)
         love.graphics.rectangle("fill",v.x,v.y,v.width,v.height)
     end
+
+    love.graphics.setColor(1,1,1)
+    love.graphics.print("Score: "..score, 30,position)
 end

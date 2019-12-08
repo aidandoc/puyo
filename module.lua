@@ -2,12 +2,12 @@ local class = {}
 
 class.meta = {
     __index = function(t,k) 
-        return t[k]
+        return t -- stack overflow error if t[k]; fix later
     end,
     __tostring = function(t) 
         local string = "{"
         if #t == 0 then return nil end
-        for i,v in pairs(t) do
+        for i,v in ipairs(t) do
             if i == #t or i < 1 then 
                 if type(v) == "table" then -- if another table
                     setmetatable(v,class.meta)
@@ -31,7 +31,7 @@ class.meta = {
         return rawset(t,k,v)
     end,
     __call = function(t,...) -- calling table adds value to end of table
-        for i,v in pairs({...}) do
+        for i,v in ipairs({...}) do
             rawset(t,#t+1,v)
         end
         return t
