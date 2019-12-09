@@ -1,5 +1,4 @@
 module = require("module")
-class  = require("class")
 
 grid = setmetatable({},module.meta)
 bricks = setmetatable({},module.meta)
@@ -91,17 +90,12 @@ function lookRadius()
             end
         end
     end
-
 end
 
 
 function love.load()
 
     love.graphics.setBackgroundColor(255,128/255,128/255)
-    l_bound = class.rect:new(width - width/4, offset, 0, height)
-    r_bound = class.rect:new(width*2, offset, 0, height)
-    ground = class.rect:new(width - width/4,height + offset,0,offset)
-
 
     generateGrid()
 
@@ -216,10 +210,6 @@ function love.draw()
     end
 
     love.graphics.setColor(255, 97/255, 97/255)
-    r_bound:draw("fill")
-    l_bound:draw("fill")
-    ground:draw("fill")
-
 
     for i,v in ipairs(puyos) do
         love.graphics.setColor(v.color.r,v.color.g,v.color.b)
