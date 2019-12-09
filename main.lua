@@ -157,7 +157,7 @@ function love.update(dt)
         for i,v in ipairs(puyos) do
             if not v.stuck then
                 if frames % (frameFall/2) == 0 then
-                    lookDir(false)
+                    lookDir(true)
                     v.x = v.x + sizeX
                 end
                 
@@ -205,7 +205,7 @@ function love.draw()
     for columns = 1, math.floor(height/sizeY) do
         for rows = 0, math.floor(width/sizeX) - 1 do
             love.graphics.setColor(255, 97/255, 97/255)
-            love.graphics.rectangle("fill",(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),sizeX,sizeY)
+            love.graphics.rectangle("line",(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),sizeX,sizeY)
         end
     end
 
