@@ -9,7 +9,7 @@ width,height = math.floor(love.graphics.getWidth()/5),math.floor(love.graphics.g
 
 down = false
 frameFall = 30
-lastX,position = 50,50
+position = 50
 falling = false
 score = 0
 colors = {
@@ -37,12 +37,19 @@ colors = {
 
 function newPuyo() -- put in class/module?
     rect = {}
-    rect.x = lastX
+    rect.x = position
     rect.y = position
     rect.width = sizeX
     rect.height = sizeY
     rect.stuck = false
     rect.color = colors[math.random(#colors)]
+    rect.puyoTwo = {}
+    rect.puyoTwo.x = rect.x
+    rect.puyoTwo.y = rect.y - 50
+    rect.puyoTwo.width = sizeX
+    rect.puyoTwo.height = sizeY
+    rect.puyoTwo.stuck = false
+    rect.puyoTwo.color = colors[math.random(#colors)]
 
     table.insert(puyos, rect)
 end
@@ -81,9 +88,8 @@ function lookRadius()
             if puyo.y + puyo.height == v.y and puyo.x == v.x and v.occ and not puyo.stuck then
                 puyo.stuck = true
                 falling = false
-                lastX = puyo.x
                 for _, bricks in ipairs(grid) do
-                    if bricks.x == puyo.x and bricks.y == puyo.y then
+                    if bricks.x == puyo.x and (bricks.y == puyo.y or bricks.y == puyo.y - sizeY) then
                         bricks.occ = true
                     end
                 end
@@ -177,9 +183,8 @@ function love.update(dt)
             v.y = height + offset - sizeY
             v.stuck = true
             falling = false
-            lastX = v.x
             for _,b in ipairs(grid) do
-                if b.x == v.x and b.y == v.y then
+                if b.x == v.x and (b.y == v.y or b.y == v.y - sizeY) then
                     b.occ = true
                 end
             end
@@ -205,7 +210,7 @@ function love.draw()
     for columns = 1, math.floor(height/sizeY) do
         for rows = 0, math.floor(width/sizeX) - 1 do
             love.graphics.setColor(255, 97/255, 97/255)
-            love.graphics.rectangle("line",(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),sizeX,sizeY)
+            love.graphics.rectangle("fill",(rows * sizeX) + width,(columns * sizeY) - (sizeX - offset),sizeX,sizeY)
         end
     end
 
@@ -214,6 +219,8 @@ function love.draw()
     for i,v in ipairs(puyos) do
         love.graphics.setColor(v.color.r,v.color.g,v.color.b)
         love.graphics.rectangle("fill",v.x,v.y,v.width,v.height)
+        love.graphics.setColor(v.puyoTwo.color.r,v.puyoTwo.color.g,v.puyoTwo.color.b)
+	love.graphics.rectangle("fill",v.x,v.y-sizeY,v.puyoTwo.width,v.puyoTwo.height)
     end
 
     love.graphics.setColor(1,1,1)
