@@ -1,4 +1,7 @@
 module = require("module")
+movement = require("movement")
+collisions = require("collisions")
+puyo = require("puyos")
 
 grid = setmetatable({},module.meta)
 bricks = setmetatable({},module.meta)
@@ -9,7 +12,7 @@ width,height = math.floor(love.graphics.getWidth()/5),math.floor(love.graphics.g
 
 down = false
 frameFall = 30
-position = 50
+position = 200
 falling = false
 score = 0
 colors = {
@@ -35,24 +38,6 @@ colors = {
     }
 }
 
-function newPuyo() -- put in class/module?
-    rect = {}
-    rect.x = position
-    rect.y = position
-    rect.width = sizeX
-    rect.height = sizeY
-    rect.stuck = false
-    rect.color = colors[math.random(#colors)]
-    rect.puyoTwo = {}
-    rect.puyoTwo.x = rect.x
-    rect.puyoTwo.y = rect.y - 50
-    rect.puyoTwo.width = sizeX
-    rect.puyoTwo.height = sizeY
-    rect.puyoTwo.stuck = false
-    rect.puyoTwo.color = colors[math.random(#colors)]
-
-    table.insert(puyos, rect)
-end
 
 function generateGrid() -- check if errors
     for columns = 1, math.floor(height/sizeY) do
@@ -66,39 +51,6 @@ function generateGrid() -- check if errors
     end
 end
 
-function lookDir(dir)
-    for i,v in ipairs(grid) do
-        for _,p in ipairs(puyos) do
-            if dir then -- right
-                if p.x + p.width == v.x and (p.y == v.y - (sizeY/2) or p.y == v.y) and not p.stuck and v.occ then
-                    p.x = p.x - p.width
-                end
-            else -- left
-                if p.x - p.width == v.x and (p.y == v.y - (sizeY/2) or p.y == v.y) and not p.stuck and v.occ then
-                    p.x = p.x + p.width
-                end
-            end
-        end
-    end
-end
-
-function lookRadius()
-    for i,v in ipairs(grid) do
-        for _, puyo in ipairs(puyos) do
-            if puyo.y + puyo.height == v.y and puyo.x == v.x and v.occ and not puyo.stuck then
-                puyo.stuck = true
-                falling = false
-                for _, bricks in ipairs(grid) do
-                    if bricks.x == puyo.x and (bricks.y == puyo.y or bricks.y == puyo.y - sizeY) then
-                        bricks.occ = true
-                    end
-                end
-            end
-        end
-    end
-end
-
-
 function love.load()
 
     love.graphics.setBackgroundColor(255,128/255,128/255)
@@ -111,64 +63,35 @@ function love.load()
 end
 
 function love.update(dt)
-    frames = frames + 1
+    frames = frames + 1 -- Frame count
 
-    for i,v in ipairs(puyos) do
-        if not v.stuck then
-            if frames % frameFall == 0 then
-                if not down then
-                    v.y = v.y + sizeY/2
-                    lookRadius()
-                end
-            end
-        end
-    end
+    movement.fall()
 
-    if not falling then
-        falling = true
-        newPuyo()
-    end
 
 
     function love.keypressed(key)
         if key == "escape" then
             love.event.quit()
         end
+        if key == "j" then
+            movement.rotate()
+        end
+        if key == "space" then
+            puyo.create()
+
+        end
     end
 
     if love.keyboard.isDown("down","s") then
-        down = true
-        for i,v in ipairs(puyos) do
-            if not v.stuck then
-                if frames % math.floor(frameFall/4) == 0 then
-                    v.y = v.y + sizeY/2
-                    lookRadius()
-                end
-            end
-        end
+        movement.push()
     end
 
     if love.keyboard.isDown("left","a") then
-        for i,v in ipairs(puyos) do
-            if not v.stuck then
-                if frames % (frameFall/2) == 0 then
-                    lookDir(false)
-                    v.x = v.x - (sizeX)
-                end
-            end
-        end
+        movement.left()
     end
 
     if love.keyboard.isDown("right","d") then
-        for i,v in ipairs(puyos) do
-            if not v.stuck then
-                if frames % (frameFall/2) == 0 then
-                    lookDir(true)
-                    v.x = v.x + sizeX
-                end
-                
-            end
-        end
+        movement.right()
     end
 
     function love.keyreleased(key)
@@ -177,31 +100,10 @@ function love.update(dt)
         end
     end
 
-    -- borders
-    for i,v in ipairs(puyos) do
-        if v.y + sizeY >= height + offset and not v.stuck then -- ground
-            v.y = height + offset - sizeY
-            v.stuck = true
-            falling = false
-            for _,b in ipairs(grid) do
-                if b.x == v.x and (b.y == v.y or b.y == v.y - sizeY) then
-                    b.occ = true
-                end
-            end
-        end
+    for _, v in ipairs(puyos) do
+        collisions.borders(v.bot,v.top)
     end
 
-    for i,v in ipairs(puyos) do
-        if v.x + sizeX >= width * 2 then -- left bound
-            v.x = width * 2 - sizeX
-        end
-    end
-
-    for i,v in ipairs(puyos) do
-        if v.x - sizeX <= width - width/4 then -- right bound
-            v.x = (width - width/4) + sizeX * 2
-        end
-    end
 
 end
 
@@ -217,12 +119,16 @@ function love.draw()
     love.graphics.setColor(255, 97/255, 97/255)
 
     for i,v in ipairs(puyos) do
-        love.graphics.setColor(v.color.r,v.color.g,v.color.b)
-        love.graphics.rectangle("fill",v.x,v.y,v.width,v.height)
-        love.graphics.setColor(v.puyoTwo.color.r,v.puyoTwo.color.g,v.puyoTwo.color.b)
-	love.graphics.rectangle("fill",v.x,v.y-sizeY,v.puyoTwo.width,v.puyoTwo.height)
+        top,bot = v.top,v.bot
+        love.graphics.setColor(top.color.r,top.color.g,top.color.b)
+        love.graphics.rectangle("fill",top.x,top.y,top.w,top.h)
+
+        love.graphics.setColor(bot.color.r,bot.color.g,bot.color.b)
+        love.graphics.rectangle("fill",bot.x,bot.y,bot.w,bot.h)
+        
     end
 
     love.graphics.setColor(1,1,1)
     love.graphics.print("Score: "..score, 30,position)
 end
+return
