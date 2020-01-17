@@ -56,23 +56,6 @@ function mod.radiusDir(dir,...)
 end
 
 
-function lookDir(dir)
-    for i,v in ipairs(grid) do
-        for _,p in ipairs(puyos) do
-            if dir then -- right
-                if p.x + p.width == v.x and (p.y == v.y - (sizeY/2) or p.y == v.y) and not p.stuck and v.occ then
-                    p.x = p.x - p.width
-                end
-            else -- left
-                if p.x - p.width == v.x and (p.y == v.y - (sizeY/2) or p.y == v.y) and not p.stuck and v.occ then
-                    p.x = p.x + p.width
-                end
-            end
-        end
-    end
-end
-
-
 function checkGround(...)
     p = { ... }
     for _, i in ipairs(p) do

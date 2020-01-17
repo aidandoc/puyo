@@ -6,3 +6,4 @@
 - Rotations
 - Press space for new puyo,
     - Auto drop puyo soon, this was added for testing.
+- `j` to rotate.
